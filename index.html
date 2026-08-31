@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>mFchat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Twitch и VK Play в одном чате: озвучка сообщений, события стрима и бегущая строка для OBS." />
+<meta name="description" content="Twitch, VK Play и Kick в одном чате: озвучка сообщений, события стрима, оверлеи и мини-игры для OBS." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -218,6 +218,21 @@
     color: var(--ink-soft);
   }
   .hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .platforms {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .platforms span {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    color: var(--ink-soft);
+  }
 
   /* ---------- section shell ---------- */
   section { padding: 52px 0; }
@@ -365,13 +380,18 @@
   <div class="wrap">
     <section class="hero">
       <span class="eyebrow"><span class="dot"></span> десктоп-чат для стримеров</span>
-      <h1>Два чата.<br>Одно окно<em>,</em> и оно ещё говорит.</h1>
-      <p class="lede">mFchat сводит Twitch и VK Play в одну живую ленту, читает сообщения вслух и выводит их бегущей строкой прямо в OBS — без десятка открытых вкладок браузера.</p>
+      <h1>Все чаты.<br>Одно окно<em>,</em> и оно ещё говорит.</h1>
+      <p class="lede">mFchat сводит Twitch, VK Play и Kick в одну живую ленту, читает сообщения вслух и выводит их бегущей строкой прямо в OBS — без десятка открытых вкладок браузера.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">
           Скачать для Windows <small class="mono" id="hero-version"></small>
         </a>
         <a class="btn btn-ghost" href="#features">Что внутри</a>
+      </div>
+      <div class="platforms">
+        <span>Twitch</span>
+        <span>VK Play</span>
+        <span>Kick</span>
       </div>
       <div class="hero-meta">
         <span>🪟 Windows 10/11</span>
@@ -385,8 +405,8 @@
     <section id="features">
       <div class="section-head">
         <span class="eyebrow"><span class="dot"></span> возможности</span>
-        <h2>Всё, что раньше жило в трёх приложениях</h2>
-        <p>Чат, модерация, озвучка и оверлей для OBS — в одной программе, которая обновляется сама.</p>
+        <h2>Всё, что раньше жило в куче вкладок и пары ботов</h2>
+        <p>Чат, модерация, озвучка, события, мини-игры и оверлеи для OBS — в одной программе, которая обновляется сама.</p>
       </div>
 
       <div class="grid">
@@ -395,7 +415,7 @@
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16v11H8l-4 4V5Z"/></svg></div>
             <h3>Мультичат в одной ленте</h3>
           </div>
-          <p>Twitch и VK Play — рядом, с общим счётчиком зрителей по обеим площадкам и фильтром, который скрывает чат конкретной платформы, не отключая её.</p>
+          <p>Twitch, VK Play и Kick — рядом, с общим счётчиком зрителей по всем площадкам, эмоутами 7TV/BTTV и фильтром, который скрывает чат конкретной платформы, не отключая её.</p>
         </div>
         <div class="card wide">
           <div class="card-head">
@@ -417,7 +437,21 @@
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
             <h3>События стрима в чате</h3>
           </div>
-          <p>Фоллоу, подписки и битсы на Twitch, опросы и старт/конец стрима на VK Play — с тумблером на каждый тип отдельно.</p>
+          <p>Фоллоу, подписки, битсы, подарки и выкупы наград на Twitch, VK Play и Kick, опросы и старт/конец стрима — с тумблером на каждый тип отдельно. Награды Kick можно вешать на эффекты прямо в приложении.</p>
+        </div>
+        <div class="card narrow">
+          <div class="card-head">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/></svg></div>
+            <h3>Мини-игры и турниры</h3>
+          </div>
+          <p>«Забег» и «Прыжки» — зрители играют командами из чата за выкуп награды, компактный оверлей внизу экрана не перекрывает картинку. Отдельный турнирный модуль: сетка, круговой или очковый формат, оверлеи счёта, сетки и таблицы для OBS.</p>
+        </div>
+        <div class="card narrow">
+          <div class="card-head">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+            <h3>Сейчас играет</h3>
+          </div>
+          <p>Оверлей с текущим треком из системного плеера или браузера — показывает, только пока музыка играет, и прячется на паузе. Работает и на Windows, и на macOS.</p>
         </div>
         <div class="card narrow">
           <div class="card-head">
@@ -457,7 +491,7 @@
       <div class="dl">
         <div>
           <h2>Скачать mFchat</h2>
-          <p>Один установщик под Windows. Ключи от Twitch и VK Play вводятся прямо в приложении — регистрировать ничего отдельно не нужно.</p>
+          <p>Один установщик под Windows. Twitch, VK Play и Kick подключаются прямо в приложении — регистрировать ничего отдельно не нужно.</p>
           <div class="dl-ctas">
             <a class="btn btn-primary" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">Скачать последнюю версию</a>
             <a class="btn btn-ghost" style="border-color:rgba(246,243,238,0.3); color:#f6f3ee;" href="https://github.com/mfreddi/chat/releases" target="_blank" rel="noopener">Все релизы</a>
