@@ -287,6 +287,13 @@
   .card.solo { grid-column: span 6; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 24px; }
   .card.solo .ic { background: var(--leaf-wash); color: var(--leaf); }
   .card.solo.alt .ic { background: var(--tomato-wash); color: var(--tomato); }
+  .card .shot { margin: 14px 0 0; border-radius: 10px; display: block; width: 100%; height: auto; }
+  .card.narrow .shot { border: 1px solid rgba(0,0,0,.12); }
+  .card.solo .shot { margin: 0; width: 220px; align-self: center; }
+  .card.solo.alt .shot { width: 320px; }
+  @media (max-width: 720px) {
+    .card.solo .shot, .card.solo.alt .shot { width: 100%; max-width: 320px; margin-top: 14px; }
+  }
 
   .changelog-note {
     margin: 20px 0 0;
@@ -390,7 +397,7 @@
     <section class="hero">
       <span class="eyebrow"><span class="dot"></span> десктоп-чат для стримеров</span>
       <h1>Все чаты.<br>Одно окно<em>,</em> и оно ещё говорит.</h1>
-      <p class="lede">mFchat сводит Twitch, VK Live и Kick в одну живую ленту, читает сообщения вслух и выводит их бегущей строкой прямо в OBS — без десятка открытых вкладок браузера.</p>
+      <p class="lede">mFchat сводит Twitch, VK Live и Kick в одну живую ленту, читает сообщения вслух, выводит их в OBS и даёт рулить звуком и сценами прямо с телефона — без десятка вкладок браузера и второго монитора.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">
           Скачать для Windows <small class="mono" id="hero-version"></small>
@@ -431,7 +438,18 @@
             <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19v3M8 22h8M9 4a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V4Z"/><path d="M5 11a7 7 0 0 0 14 0"/></svg></div>
             <h3>Голос для чата</h3>
           </div>
-          <p>Edge TTS озвучивает сообщения нейросетевым голосом — бесплатная альтернатива системному роботу. Очередь не даёт репликам перебивать друг друга, есть кнопка «прервать» и индикатор в шапке.</p>
+          <p>Нейросетевые голоса озвучивают сообщения — движок на выбор, бесплатная альтернатива системному роботу. Очередь не даёт репликам перебивать друг друга, есть кнопка «прервать» и индикатор в шапке.</p>
+        </div>
+
+        <div class="card solo">
+          <div>
+            <div class="card-head">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+              <h3>Пульт — телефон вместо стрим-деки</h3>
+            </div>
+            <p>Открываешь QR-код на телефоне в той же Wi-Fi — и под пальцем: микшер громкости приложений (игра, Discord, музыка, браузер по отдельности), переключение сцен OBS и лента чата со всех площадок. Для тех, у кого нет второго монитора и железного пульта.</p>
+          </div>
+          <img class="shot" src="img/deck.webp" width="620" height="722" alt="Телефон-пульт mFchat: микшер громкости приложений" loading="lazy" />
         </div>
 
         <div class="card narrow">
@@ -471,10 +489,11 @@
         </div>
         <div class="card narrow">
           <div class="card-head">
-            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 17V7l8-4 8 4v10l-8 4-8-4Z"/><path d="M12 3v18"/></svg></div>
-            <h3>Streamer.bot</h3>
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg></div>
+            <h3>Первое сообщение</h3>
           </div>
-          <p>События VK Live уходят в Streamer.bot по WebSocket — настраивайте свои реакции без ограничений mFchat.</p>
+          <p>Плашка со звуком в OBS, когда зритель пишет в чат первый раз за стрим. Свои цвета, анимация, картинка на плашке; отдельные профили (плашка + звук) для конкретных ников и ролей. При рейде — одна сводная плашка «+N новых» вместо десятков.</p>
+          <img class="shot" src="img/first-message.webp" width="640" height="202" alt="Плашка «Первое сообщение» в оверлее OBS" loading="lazy" />
         </div>
 
         <div class="card solo alt" id="obs">
@@ -485,6 +504,7 @@
             </div>
             <p>Готовая ссылка на прозрачную страницу для Browser Source: обычный список сообщений или бегущая строка со своей скоростью прокрутки. Кнопка «Тест» проверяет анимацию, не дожидаясь реальных сообщений в чате.</p>
           </div>
+          <img class="shot" src="img/chat-overlay.webp" width="760" height="519" alt="Оверлей чата для OBS со всех площадок" loading="lazy" />
         </div>
 
         <div class="card solo">
