@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Планы mFchat</title>
+<meta name="description" content="Куда движется mFchat: что в разработке и что в планах">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f3ee;
+    --paper-raised:#ffffff;
+    --ink:#1a1820;
+    --ink-soft:#5b5763;
+    --line:rgba(26,24,32,0.10);
+    --tomato:#dd3c28;
+    --tomato-soft:#fdece8;
+    --leaf:#2f9a56;
+    --leaf-soft:#e8f5ec;
+    --amber:#b8791a;
+    --amber-soft:#fbf1de;
+    --violet:#6e5bd6;
+    --violet-soft:#eeebfb;
+    --shadow: 0 1px 2px rgba(26,24,32,0.04), 0 10px 24px -14px rgba(26,24,32,0.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#17151b;
+      --paper-raised:#211e27;
+      --ink:#f3f0ea;
+      --ink-soft:#a8a3b2;
+      --line:rgba(255,255,255,0.10);
+      --tomato:#ff5a42;
+      --tomato-soft:rgba(255,90,66,0.14);
+      --leaf:#4dc97e;
+      --leaf-soft:rgba(77,201,126,0.14);
+      --amber:#e0aa4c;
+      --amber-soft:rgba(224,170,76,0.14);
+      --violet:#9b8bef;
+      --violet-soft:rgba(155,139,239,0.14);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px -14px rgba(0,0,0,0.5);
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html,body{ margin:0; }
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Manrope', ui-sans-serif, system-ui, sans-serif;
+    padding: 0 16px;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; padding-block: 40px 64px; }
+
+  .top{ display:flex; align-items:center; gap:14px; margin-bottom: 6px; }
+  .mark{
+    width:44px; height:44px; border-radius:26%; background:var(--tomato);
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+    box-shadow: var(--shadow);
+  }
+  .mark svg{ width:24px; height:24px; }
+  .brand{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:22px; letter-spacing:-0.01em; color:var(--ink); text-decoration:none; }
+  .verchip{
+    font-family:'IBM Plex Mono', ui-monospace, monospace; font-size:11.5px; font-weight:600;
+    color:var(--ink-soft); border:1px solid var(--line); border-radius:999px;
+    padding:3px 10px; margin-left:auto; white-space:nowrap; text-decoration:none;
+  }
+  .back{
+    font-size:13px; font-weight:600; color:var(--ink-soft); text-decoration:none;
+    display:inline-flex; align-items:center; gap:5px; margin-bottom:20px;
+  }
+  .back:hover{ color:var(--ink); }
+
+  h1{
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:clamp(28px,6vw,38px);
+    line-height:1.12; letter-spacing:-0.01em; margin: 18px 0 10px; text-wrap:balance;
+  }
+  .lede{ color:var(--ink-soft); font-size:16px; line-height:1.6; max-width:58ch; margin: 0 0 28px; }
+  .lede b{ color:var(--ink); }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:8px 14px; margin: 0 0 36px; padding: 14px 16px;
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:14px;
+  }
+  .legend-item{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  .dot{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+
+  section{ margin-bottom: 40px; }
+  .sec-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:16px; }
+  .sec-title{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:19px; letter-spacing:-0.01em; }
+  .sec-sub{ font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+
+  .card{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:16px;
+    padding:18px 20px; margin-bottom:12px; box-shadow: var(--shadow);
+  }
+  .card-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .card-title{ font-weight:800; font-size:15.5px; }
+  .tag{
+    font-family:'IBM Plex Mono', ui-monospace, monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:0.02em; padding:3px 9px; border-radius:999px; white-space:nowrap;
+  }
+  .tag.now{ background:var(--leaf-soft); color:var(--leaf); }
+  .tag.next{ background:var(--tomato-soft); color:var(--tomato); }
+  .tag.later{ background:var(--amber-soft); color:var(--amber); }
+  .tag.idea{ background:var(--violet-soft); color:var(--violet); }
+  .card p{ margin:0; font-size:14px; line-height:1.55; color:var(--ink-soft); }
+  .card p b{ color:var(--ink); font-weight:700; }
+  .card ul{ margin:8px 0 0; padding-left:18px; font-size:13.5px; line-height:1.6; color:var(--ink-soft); }
+  .card li{ margin-bottom:2px; }
+
+  .idea-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  @media (max-width: 560px){ .idea-grid{ grid-template-columns: 1fr; } }
+  .idea{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; font-size:13.5px; line-height:1.5;
+  }
+  .idea b{ display:block; font-size:14px; margin-bottom:3px; }
+  .idea span{ color:var(--ink-soft); }
+
+  footer{
+    margin-top: 44px; padding-top:20px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--ink-soft); line-height:1.6;
+  }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="/">← на сайт mFchat</a>
+
+  <div class="top">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.12 5.12 4 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5v-7Z" fill="#fffaf3"/><circle cx="9" cy="10" r="1.15" fill="#dd3c28"/><circle cx="12.5" cy="10" r="1.15" fill="#dd3c28"/><circle cx="16" cy="10" r="1.15" fill="#dd3c28"/></svg>
+    </div>
+    <a class="brand" href="/">mFchat</a>
+    <a class="verchip" id="changelog-link" href="#" target="_blank" rel="noopener">что нового →</a>
+  </div>
+
+  <h1>Куда движется mFchat</h1>
+  <p class="lede">
+    Открытые планы по разработке — чтобы все, кто пишет фидбек в чате, видели,
+    что уже в работе, а что ещё только в очереди. <b>Порядок не железный</b> —
+    двигается по вашим сообщениям, так что пишите, если что-то из этого важно
+    именно вам (или чего-то тут не хватает).
+  </p>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot" style="background:var(--leaf)"></span>в работе сейчас</div>
+    <div class="legend-item"><span class="dot" style="background:var(--tomato)"></span>следующее</div>
+    <div class="legend-item"><span class="dot" style="background:var(--amber)"></span>в очереди</div>
+    <div class="legend-item"><span class="dot" style="background:var(--violet)"></span>идея / на радаре</div>
+  </div>
+
+  <section>
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <p style="margin:0;">Что уже вышло — в общем логе изменений, там же самое актуальное всегда.</p>
+      <a id="changelog-link-2" href="#" target="_blank" rel="noopener" style="font-weight:700; color:var(--tomato); white-space:nowrap;">Открыть CHANGELOG →</a>
+    </div>
+  </section>
+
+  <div id="sections"></div>
+
+  <section>
+    <div class="sec-head">
+      <div class="sec-title">На радаре</div>
+      <div class="sec-sub">идеи, ещё не в очереди</div>
+    </div>
+    <div class="idea-grid" id="ideas"></div>
+  </section>
+
+  <footer>
+    Список живой и открытый — <b>пишите фидбек прямо в чат</b>, он реально влияет на порядок.
+    Спасибо, что тестируете и подсказываете, что не так 🙂
+  </footer>
+
+</div>
+
+<script src="roadmap.data.js"></script>
+<script>
+(function () {
+  var DATA = window.MFCHAT_ROADMAP
+  if (!DATA) return
+
+  var TAG_LABEL = { now: 'в работе сейчас', next: 'следующее', later: 'в очереди', idea: 'идея' }
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag)
+    if (cls) e.className = cls
+    if (html != null) e.innerHTML = html
+    return e
+  }
+
+  document.getElementById('changelog-link').href = DATA.changelogUrl
+  document.getElementById('changelog-link-2').href = DATA.changelogUrl
+
+  var sectionsRoot = document.getElementById('sections')
+  DATA.sections.forEach(function (sec) {
+    var section = el('section')
+    var head = el('div', 'sec-head')
+    head.appendChild(el('div', 'sec-title', sec.title))
+    if (sec.sub) head.appendChild(el('div', 'sec-sub', sec.sub))
+    section.appendChild(head)
+
+    sec.cards.forEach(function (card) {
+      var cardEl = el('div', 'card')
+      var cardHead = el('div', 'card-head')
+      cardHead.appendChild(el('div', 'card-title', card.title))
+      if (card.tag) {
+        cardHead.appendChild(el('span', 'tag ' + card.tag, TAG_LABEL[card.tag] || card.tag))
+      }
+      cardEl.appendChild(cardHead)
+      if (card.body) cardEl.appendChild(el('p', null, card.body))
+      if (card.list && card.list.length) {
+        var ul = el('ul')
+        card.list.forEach(function (item) { ul.appendChild(el('li', null, item)) })
+        cardEl.appendChild(ul)
+      }
+      section.appendChild(cardEl)
+    })
+
+    sectionsRoot.appendChild(section)
+  })
+
+  var ideasRoot = document.getElementById('ideas')
+  DATA.ideas.forEach(function (idea) {
+    var ideaEl = el('div', 'idea')
+    ideaEl.appendChild(el('b', null, idea.title))
+    ideaEl.appendChild(el('span', null, idea.desc))
+    ideasRoot.appendChild(ideaEl)
+  })
+})()
+</script>
+</body>
+</html>
