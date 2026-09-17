@@ -49,6 +49,11 @@ window.MFCHAT_ROADMAP = {
           title: 'Tribute',
           tag: 'later',
           body: 'API уже изучено и проверено, ждёт технической инфраструктуры перед стартом разработки.'
+        },
+        {
+          title: 'Ещё площадки на примете',
+          tag: 'idea',
+          body: 'Donatty, Destream, ODA, StreamElements, StreamLabs — смотрим, у кого API попроще. Donatello — если будет украиноязычная аудитория.'
         }
       ]
     }
