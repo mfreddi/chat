@@ -98,9 +98,8 @@
   .card-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
   .card-title{ font-weight:800; font-size:15.5px; }
   .tag{
-    font-family:'IBM Plex Mono', ui-monospace, monospace; font-size:8px; font-weight:600;
-    letter-spacing:0.02em; padding:1.5px 6px; border-radius:999px; white-space:nowrap;
-    line-height:1.5;
+    font-family:'IBM Plex Mono', ui-monospace, monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:0.02em; padding:3px 9px; border-radius:999px; white-space:nowrap;
   }
   .tag.now{ background:var(--leaf-soft); color:var(--leaf); }
   .tag.next{ background:var(--tomato-soft); color:var(--tomato); }
@@ -113,7 +112,7 @@
 
   .idea-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
   @media (max-width: 560px){ .idea-grid{ grid-template-columns: 1fr; } }
-  .idea{
+  .idea:not(.tag){
     background:var(--paper-raised); border:1px solid var(--line); border-radius:14px;
     padding:14px 16px; font-size:13.5px; line-height:1.5;
   }
