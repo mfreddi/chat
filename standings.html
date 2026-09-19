@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>mFchat — турнирная таблица</title>
+<style>
+  :root { --accent: #6366f1; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: transparent; overflow: hidden;
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  /* Fullscreen transparent - put it on a "перерыв" scene. Nothing while hidden. */
+  /* The stream stays visible; only the table sits on a contained dark panel. */
+  #wrap { position: absolute; inset: 0; display: none; padding: 50px; overflow: auto; }
+  #wrap.show { display: block; }
+  .panel {
+    width: fit-content; max-width: 100%; margin: 0 auto;
+    background: rgba(8, 9, 13, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 28px 40px 34px;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
+  h2 {
+    text-align: center; margin: 0 0 22px; font-size: 26px; text-shadow: 0 2px 6px rgba(0,0,0,.5);
+    max-width: 80vw; word-break: break-word; unicode-bidi: plaintext;
+  }
+  table {
+    width: 640px; max-width: 100%; margin: 0 auto; border-collapse: collapse; table-layout: fixed;
+    background: rgba(15,16,24,.9); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  th, td { padding: 12px 18px; text-align: left; font-size: 15px; }
+  td:nth-child(2) {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; unicode-bidi: plaintext;
+  }
+  th { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.5); background: rgba(255,255,255,.04); }
+  tbody tr + tr td { border-top: 1px solid rgba(255,255,255,.07); }
+  td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; width: 56px; }
+  tr.top td:first-child, tr.top td:nth-child(2) { color: var(--accent); font-weight: 800; }
+  .pts { font-weight: 800; }
+  #empty { text-align: center; color: rgba(255,255,255,.5); margin-top: 30px; }
+  /* Public mode only (?id=...) - the streamer paused updates (stop() was
+     called) but the last state is still shown, so this says why it's not
+     changing instead of letting it look broken. */
+  #stale {
+    display: none; text-align: center; font-size: 12px; letter-spacing: .06em;
+    text-transform: uppercase; color: rgba(255,255,255,.55); margin: -12px 0 18px;
+  }
+  #stale.show { display: block; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="panel">
+    <h2 id="title"></h2>
+    <div id="stale">Стример сейчас не обновляет таблицу - показано последнее известное состояние</div>
+    <table id="tbl">
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"></tbody>
+    </table>
+    <div id="empty" style="display:none">Нет сыгранных матчей</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const wrap = document.getElementById('wrap')
+  const body = document.getElementById('body')
+  const emptyEl = document.getElementById('empty')
+  const staleEl = document.getElementById('stale')
+  // Public sharing mode: ?id=<uuid> means this page was opened from the
+  // public link (see PublicBracket.ts), not embedded as an OBS Browser
+  // Source - there's no local app to open a WebSocket to, so this polls the
+  // same Supabase row the app pushes into instead (the same row
+  // tournament-bracket.html's public mode reads - one tournament, one row,
+  // rendered differently depending on which page you're on).
+  const PUBLIC_ID = new URLSearchParams(location.search).get('id')
+  const PUBLIC_PROXY = 'https://api.mfred.ru/mfchat'
+  const PUBLIC_ANON_KEY = 'sb_publishable_gMcCahk5mWU0tteU47hAKQ_oUcVka30'
+
+  const head = document.getElementById('head')
+
+  function render(state, live) {
+    document.documentElement.style.setProperty('--accent', state.overlay?.accent || '#6366f1')
+    // standingsVisible controls the OBS Browser Source - not relevant to a
+    // viewer who deliberately opened the public link.
+    if (!PUBLIC_ID && !state.overlay?.standingsVisible) { wrap.classList.remove('show'); return }
+    wrap.classList.add('show')
+    staleEl.classList.toggle('show', PUBLIC_ID != null && live === false)
+
+    const isPoints = state.format === 'points'
+    document.getElementById('title').textContent =
+      (state.name || 'Турнир') + (isPoints ? ' — таблица очков' : ' — таблица')
+
+    let rows
+    if (isPoints) {
+      head.innerHTML = '<th class="num">#</th><th>Участник</th><th class="num">Игр</th><th class="num">Очки</th>'
+      const rounds = state.rounds || []
+      rows = (state.participants || []).map((p) => {
+        let total = 0, gp = 0
+        rounds.forEach((r) => {
+          const v = r.scores && r.scores[p.id]
+          if (v != null && v !== '') { total += Number(v) || 0; gp++ }
+        })
+        return { name: p.name, a: gp, b: total, played: rounds.length }
+      })
+      rows.sort((x, y) => y.b - x.b || x.name.localeCompare(y.name))
+      emptyEl.textContent = 'Нет сыгранных игр'
+    } else {
+      head.innerHTML = '<th class="num">#</th><th>Участник</th><th class="num">В</th><th class="num">П</th><th class="num">Очки</th>'
+      const stats = {}
+      ;(state.participants || []).forEach((p) => { stats[p.id] = { name: p.name, w: 0, l: 0, gp: 0 } })
+      ;(state.matches || []).forEach((m) => {
+        if (!m.winner || !m.a || !m.b) return
+        const loser = m.winner === m.a ? m.b : m.a
+        if (stats[m.winner]) { stats[m.winner].w++; stats[m.winner].gp++ }
+        if (stats[loser]) { stats[loser].l++; stats[loser].gp++ }
+      })
+      rows = Object.values(stats)
+        .map((r) => ({ name: r.name, a: r.w, b: r.l, pts: r.w * 3, played: r.gp }))
+        .sort((x, y) => y.pts - x.pts || y.a - x.a || x.b - y.b || x.name.localeCompare(y.name))
+      emptyEl.textContent = 'Нет сыгранных матчей'
+    }
+
+    if (!rows.length || (!isPoints && !rows.some((r) => r.played > 0))) {
+      document.getElementById('tbl').style.display = 'none'
+      emptyEl.style.display = 'block'
+      return
+    }
+    document.getElementById('tbl').style.display = ''
+    emptyEl.style.display = 'none'
+    body.innerHTML = ''
+    rows.forEach((r, i) => {
+      const tr = document.createElement('tr')
+      if (i === 0) tr.className = 'top'
+      const last = isPoints ? r.b : r.pts
+      tr.innerHTML =
+        '<td class="num">' + (i + 1) + '</td>' +
+        '<td></td>' +
+        '<td class="num">' + r.a + '</td>' +
+        (isPoints ? '' : '<td class="num">' + r.b + '</td>') +
+        '<td class="num pts">' + last + '</td>'
+      tr.children[1].textContent = r.name
+      body.appendChild(tr)
+    })
+  }
+
+  function connect() {
+    const ws = new WebSocket('ws://' + location.host)
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg && (msg.type === 'tournament_update' || msg.type === 'tournament_demo')) render(msg.state)
+      } catch (err) { /* ignore */ }
+    }
+    ws.onclose = () => setTimeout(connect, 2000)
+    ws.onerror = () => ws.close()
+  }
+
+  // Public mode: no app to open a socket to - poll the row the app itself
+  // pushes into (see PublicBracket.ts). A few seconds of lag is a fine
+  // trade for needing no persistent connection to anything of ours.
+  let lastUpdatedAt = null
+  function pollPublic() {
+    fetch(`${PUBLIC_PROXY}/rest/v1/rpc/public_bracket_read`, {
+      method: 'POST',
+      headers: {
+        apikey: PUBLIC_ANON_KEY,
+        Authorization: 'Bearer ' + PUBLIC_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_id: PUBLIC_ID })
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rows) => {
+        const row = rows && rows[0]
+        if (row && row.state && row.updated_at !== lastUpdatedAt) {
+          lastUpdatedAt = row.updated_at
+          render(row.state, row.live)
+        } else if (!row) {
+          document.getElementById('tbl').style.display = 'none'
+          emptyEl.style.display = 'block'
+          emptyEl.textContent = 'Ссылка не найдена - возможно, ещё не была включена'
+        }
+      })
+      .catch(() => { /* transient network hiccup - next poll will retry */ })
+      .finally(() => setTimeout(pollPublic, 4000))
+  }
+
+  if (PUBLIC_ID) pollPublic()
+  else connect()
+})()
+</script>
+</body>
+</html>
