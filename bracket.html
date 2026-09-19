@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>mFchat — турнирная сетка</title>
+<style>
+  :root { --accent: #6366f1; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: transparent; overflow: hidden;
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    color: #fff;
+  }
+  /* Fullscreen transparent - the stream stays fully visible; only the bracket
+     itself sits on a contained dark panel so text never blends into the scene.
+     Nothing is drawn while it's hidden. */
+  #wrap {
+    position: absolute; inset: 0; display: none;
+    padding: 40px; overflow: auto;
+  }
+  #wrap.show { display: block; }
+  .panel {
+    width: fit-content; max-width: 100%; margin: 0 auto;
+    background: rgba(8, 9, 13, 0.66);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 26px 40px 34px;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
+  h2 {
+    text-align: center; margin: 0 0 6px; font-size: 26px; letter-spacing: .04em;
+    text-shadow: 0 2px 6px rgba(0,0,0,.5);
+    max-width: 80vw; word-break: break-word; unicode-bidi: plaintext;
+  }
+  .sub { text-align: center; color: rgba(255,255,255,.6); margin-bottom: 26px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .rounds { display: flex; gap: 46px; justify-content: center; min-width: max-content; margin: 0 auto; }
+  /* double_elim only - winners/losers/grand-final stacked as separate
+     groups instead of one continuous row, since they're separate brackets. */
+  .bracket-section + .bracket-section { margin-top: 30px; }
+  .bracket-section__title {
+    text-align: center; font-size: 13px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 14px;
+  }
+  .round { display: flex; flex-direction: column; justify-content: space-around; gap: 18px; }
+  /* connector stubs - horizontal lines in/out of each match */
+  .round:not(:last-child) .match::after,
+  .round:not(:first-child) .match::before {
+    content: ''; position: absolute; top: 50%; width: 23px; height: 2px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .round:not(:last-child) .match::after { right: -23px; }
+  .round:not(:first-child) .match::before { left: -23px; }
+  .round__label { text-align: center; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 2px; }
+  .match {
+    position: relative; width: 236px; background: rgba(15,16,24,.9);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.4);
+  }
+  .match .team:first-child { border-radius: 9px 9px 0 0; }
+  .match .team:last-child { border-radius: 0 0 9px 9px; }
+  .match.live { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 30px rgba(99,102,241,.4); }
+  .team {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 13px; font-size: 15px; gap: 8px;
+  }
+  .team + .team { border-top: 1px solid rgba(255,255,255,.08); }
+  .team.win { font-weight: 700; }
+  .team.win .score { color: var(--accent); }
+  .team.lose { color: rgba(255,255,255,.4); }
+  .team .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; unicode-bidi: plaintext; }
+  .team .tlogo { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; flex: 0 0 auto; }
+  #wrap.nologo .tlogo { display: none; }
+  .score { font-variant-numeric: tabular-nums; font-weight: 700; flex: 0 0 auto; }
+  .live-tag {
+    font-size: 9px; letter-spacing: .12em; background: var(--accent); color: #fff;
+    padding: 2px 6px; border-radius: 4px; vertical-align: middle; flex: 0 0 auto;
+  }
+  #empty { text-align: center; color: rgba(255,255,255,.5); font-size: 15px; margin-top: 40px; }
+  /* Public mode only (?id=...) - the streamer paused updates (stop() was
+     called) but the last state is still shown, so this says why it's not
+     changing instead of letting it look broken. */
+  #stale {
+    display: none; text-align: center; font-size: 12px; letter-spacing: .06em;
+    text-transform: uppercase; color: rgba(255,255,255,.55); margin: -14px 0 20px;
+  }
+  #stale.show { display: block; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="panel">
+    <h2 id="name"></h2>
+    <div class="sub" id="sub"></div>
+    <div id="stale">Стример сейчас не обновляет сетку - показано последнее известное состояние</div>
+    <div id="rounds"></div>
+    <div id="empty" style="display:none">Сетка ещё не сгенерирована</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const wrap = document.getElementById('wrap')
+  const roundsEl = document.getElementById('rounds')
+  const emptyEl = document.getElementById('empty')
+  const staleEl = document.getElementById('stale')
+  // Public sharing mode: ?id=<uuid> means this page was opened from the
+  // public link (see PublicBracket.ts), not embedded as an OBS Browser
+  // Source - there's no local app to open a WebSocket to at all, so this
+  // polls the same Supabase row the app pushes into instead. Goes through a
+  // reverse proxy that hides the real supabase.co host from anyone
+  // inspecting the page's network traffic.
+  const PUBLIC_ID = new URLSearchParams(location.search).get('id')
+  const PUBLIC_PROXY = 'https://api.mfred.ru/mfchat'
+  const PUBLIC_ANON_KEY = 'sb_publishable_gMcCahk5mWU0tteU47hAKQ_oUcVka30'
+
+  function roundLabel(total, r) {
+    const fromEnd = total - 1 - r
+    if (fromEnd === 0) return 'Финал'
+    if (fromEnd === 1) return 'Полуфинал'
+    if (fromEnd === 2) return '1/4 финала'
+    if (fromEnd === 3) return '1/8 финала'
+    return 'Раунд ' + (r + 1)
+  }
+
+  function matchBox(m, byId, liveMatchId) {
+    const box = document.createElement('div')
+    box.className = 'match' + (m.id === liveMatchId ? ' live' : '')
+    const decided = m.winner
+    ;['a', 'b'].forEach((k) => {
+      const t = document.createElement('div')
+      const isWin = decided === m[k]
+      const isLose = decided && decided !== m[k]
+      t.className = 'team' + (isWin ? ' win' : '') + (isLose ? ' lose' : '')
+      const p = byId[m[k]]
+      if (p && p.logo) {
+        const lg = document.createElement('img')
+        lg.className = 'tlogo'; lg.src = p.logo
+        t.appendChild(lg)
+      }
+      const nm = document.createElement('span')
+      nm.className = 'nm'
+      nm.textContent = (p && p.name) || '—'
+      t.appendChild(nm)
+      if (m.id === liveMatchId && !decided) {
+        const tag = document.createElement('span')
+        tag.className = 'live-tag'; tag.textContent = 'LIVE'
+        t.appendChild(tag)
+      }
+      const sc = document.createElement('span')
+      sc.className = 'score'
+      sc.textContent = (k === 'a' ? m.scoreA : m.scoreB)
+      t.appendChild(sc)
+      box.appendChild(t)
+    })
+    return box
+  }
+
+  // Renders one `.rounds` row of columns (round 0..totalRounds-1) into
+  // `container` - shared by single_elim's one bracket and double_elim's two
+  // (winners/losers), which otherwise draw identically.
+  function renderRoundsRow(container, matches, byId, liveMatchId, labelFn) {
+    const totalRounds = Math.max(...matches.map((m) => m.round)) + 1
+    for (let r = 0; r < totalRounds; r++) {
+      const col = document.createElement('div')
+      col.className = 'round'
+      const lbl = document.createElement('div')
+      lbl.className = 'round__label'
+      lbl.textContent = labelFn(totalRounds, r)
+      const first = document.createElement('div')
+      first.appendChild(lbl)
+      let labelPlaced = false
+
+      matches.filter((m) => m.round === r).sort((a, b) => a.slot - b.slot).forEach((m) => {
+        const box = matchBox(m, byId, liveMatchId)
+        if (!labelPlaced) { first.appendChild(box); col.appendChild(first); labelPlaced = true }
+        else col.appendChild(box)
+      })
+      container.appendChild(col)
+    }
+  }
+
+  function losersLabel(total, r) {
+    return r === total - 1 ? 'Финал лузеров' : 'Раунд ' + (r + 1)
+  }
+
+  function render(state, live) {
+    document.documentElement.style.setProperty('--accent', state.overlay?.accent || '#6366f1')
+    // The bracketVisible toggle controls the OBS Browser Source - not
+    // relevant to a viewer who deliberately opened the public link.
+    if (!PUBLIC_ID && !state.overlay?.bracketVisible) { wrap.classList.remove('show'); return }
+    wrap.classList.add('show')
+    staleEl.classList.toggle('show', PUBLIC_ID != null && live === false)
+    wrap.classList.toggle('nologo', !state.overlay?.showLogos)
+    document.getElementById('name').textContent = state.name || 'Турнир'
+    document.getElementById('sub').textContent =
+      (state.format === 'single_elim' ? 'Single elimination'
+        : state.format === 'double_elim' ? 'Double elimination'
+        : state.format === 'round_robin' ? 'Круговой турнир' : 'Матчи') +
+      ' · ' + (state.participants?.length || 0) + ' участников'
+
+    const byId = Object.fromEntries((state.participants || []).map((p) => [p.id, p]))
+    const matches = state.matches || []
+    const bracketed = state.format === 'single_elim' || state.format === 'double_elim'
+    if (!matches.length || !bracketed) {
+      roundsEl.innerHTML = ''
+      emptyEl.style.display = 'block'
+      emptyEl.textContent = bracketed
+        ? 'Сетка ещё не сгенерирована'
+        : 'Формат без сетки — смотрите таблицу'
+      return
+    }
+    emptyEl.style.display = 'none'
+    roundsEl.innerHTML = ''
+
+    if (state.format === 'single_elim') {
+      const row = document.createElement('div')
+      row.className = 'rounds'
+      renderRoundsRow(row, matches, byId, state.liveMatchId, roundLabel)
+      roundsEl.appendChild(row)
+      return
+    }
+
+    // double_elim: winners bracket, losers bracket, then the grand final as
+    // its own small standalone match - three visually distinct groups
+    // instead of one continuous row, since they're separate brackets, not
+    // consecutive rounds of the same one.
+    const winners = matches.filter((m) => m.bracket === 'winners')
+    const losers = matches.filter((m) => m.bracket === 'losers')
+    // Bracket reset: a second 'final' match, pre-built empty and only
+    // populated (a/b set) if the losers-bracket side won the first one -
+    // show it too when that happened, not just the first final.
+    const finals = matches.filter((m) => m.bracket === 'final' && (m.a || m.b)).sort((a, b) => a.round - b.round)
+
+    const wSection = document.createElement('div')
+    wSection.className = 'bracket-section'
+    const wTitle = document.createElement('div')
+    wTitle.className = 'bracket-section__title'
+    wTitle.textContent = 'Сетка победителей'
+    wSection.appendChild(wTitle)
+    const wRow = document.createElement('div')
+    wRow.className = 'rounds'
+    renderRoundsRow(wRow, winners, byId, state.liveMatchId, roundLabel)
+    wSection.appendChild(wRow)
+    roundsEl.appendChild(wSection)
+
+    if (losers.length) {
+      const lSection = document.createElement('div')
+      lSection.className = 'bracket-section'
+      const lTitle = document.createElement('div')
+      lTitle.className = 'bracket-section__title'
+      lTitle.textContent = 'Сетка проигравших'
+      lSection.appendChild(lTitle)
+      const lRow = document.createElement('div')
+      lRow.className = 'rounds'
+      renderRoundsRow(lRow, losers, byId, state.liveMatchId, losersLabel)
+      lSection.appendChild(lRow)
+      roundsEl.appendChild(lSection)
+    }
+
+    if (finals.length) {
+      const fSection = document.createElement('div')
+      fSection.className = 'bracket-section'
+      const fTitle = document.createElement('div')
+      fTitle.className = 'bracket-section__title'
+      fTitle.textContent = 'Гранд-финал'
+      fSection.appendChild(fTitle)
+      const fRow = document.createElement('div')
+      fRow.className = 'rounds'
+      finals.forEach((m, i) => {
+        const col = document.createElement('div')
+        col.className = 'round'
+        if (finals.length > 1) {
+          const lbl = document.createElement('div')
+          lbl.className = 'round__label'
+          lbl.textContent = i === 0 ? 'Матч 1' : 'Решающий матч'
+          col.appendChild(lbl)
+        }
+        col.appendChild(matchBox(m, byId, state.liveMatchId))
+        fRow.appendChild(col)
+      })
+      fSection.appendChild(fRow)
+      roundsEl.appendChild(fSection)
+    }
+  }
+
+  function connect() {
+    const ws = new WebSocket('ws://' + location.host)
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg && (msg.type === 'tournament_update' || msg.type === 'tournament_demo')) render(msg.state)
+      } catch (err) { /* ignore */ }
+    }
+    ws.onclose = () => setTimeout(connect, 2000)
+    ws.onerror = () => ws.close()
+  }
+
+  // Public mode: no app to open a socket to - poll the row the app itself
+  // pushes into (see PublicBracket.ts). A few seconds of lag is a fine
+  // trade for needing no persistent connection to anything of ours.
+  let lastUpdatedAt = null
+  function pollPublic() {
+    fetch(`${PUBLIC_PROXY}/rest/v1/rpc/public_bracket_read`, {
+      method: 'POST',
+      headers: {
+        apikey: PUBLIC_ANON_KEY,
+        Authorization: 'Bearer ' + PUBLIC_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_id: PUBLIC_ID })
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rows) => {
+        const row = rows && rows[0]
+        if (row && row.state && row.updated_at !== lastUpdatedAt) {
+          lastUpdatedAt = row.updated_at
+          render(row.state, row.live)
+        } else if (!row) {
+          emptyEl.style.display = 'block'
+          emptyEl.textContent = 'Ссылка не найдена - возможно, ещё не была включена'
+          roundsEl.innerHTML = ''
+        }
+      })
+      .catch(() => { /* transient network hiccup - next poll will retry */ })
+      .finally(() => setTimeout(pollPublic, 4000))
+  }
+
+  if (PUBLIC_ID) pollPublic()
+  else connect()
+})()
+</script>
+</body>
+</html>
