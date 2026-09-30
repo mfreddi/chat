@@ -397,10 +397,10 @@
   <div class="wrap">
     <section class="hero">
       <span class="eyebrow"><span class="dot"></span> десктоп-чат для стримеров</span>
-      <h1>Все чаты.<br>Одно окно<em>,</em> и оно ещё говорит.</h1>
+      <h1>Все чаты. Одно окно.</h1>
       <p class="lede">mFchat сводит Twitch, VK Live, Kick и YouTube в одну живую ленту, читает сообщения вслух, выводит их в OBS и даёт рулить звуком и сценами прямо с телефона — без десятка вкладок браузера и второго монитора.</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">
+        <a class="btn btn-primary download-link" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">
           Скачать для Windows <small class="mono" id="hero-version"></small>
         </a>
         <a class="btn btn-ghost" href="#features">Что внутри</a>
@@ -531,10 +531,9 @@
           <h2>Скачать mFchat</h2>
           <p>Один установщик под Windows. Twitch, VK Live, Kick и YouTube подключаются прямо в приложении — регистрировать ничего отдельно не нужно.</p>
           <div class="dl-ctas">
-            <a class="btn btn-primary" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">Скачать последнюю версию</a>
+            <a class="btn btn-primary download-link" href="https://github.com/mfreddi/chat/releases/latest" target="_blank" rel="noopener">Скачать последнюю версию</a>
             <a class="btn btn-ghost" style="border-color:rgba(246,243,238,0.3); color:#f6f3ee;" href="https://github.com/mfreddi/chat/releases" target="_blank" rel="noopener">Все релизы</a>
           </div>
-          <div class="dl-note mono" id="dl-version-line">mFchat · Windows · GitHub Releases</div>
         </div>
         <div class="dl-panel">
           <div class="row"><span>Платформа</span><span>Windows 10/11 x64</span></div>
@@ -559,6 +558,19 @@
         if (heroV) heroV.textContent = 'v' + v;
         if (panelV) panelV.textContent = 'v' + v;
         if (line) line.textContent = 'mFchat v' + v + ' · Windows · GitHub Releases';
+
+        var downloadLink = document.querySelectorAll('.download-link');
+        var exe = data.assets && data.assets.find(function (asset) {
+          return /\.exe$/i.test(asset.name);
+        });
+
+        if (exe && downloadLink) {
+          downloadLink.forEach(function(link) {
+            link.href = exe.browser_download_url;
+          });
+          // downloadLink.removeAttribute('target');
+          // downloadLink.removeAttribute('rel');
+        }
       })
       .catch(function () {});
   })();
