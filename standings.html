@@ -67,6 +67,13 @@
 </div>
 
 <script>
+// Opened from another PC by the LAN link (http://<ip>:1040/...): pictures and sounds the
+// app stored arrive as http://localhost:1040/media/..., which on that PC means itself.
+// Point them at the PC this page came from. On this PC (localhost) nothing changes.
+function lanMedia(text) {
+  if (typeof text !== 'string' || location.protocol !== 'http:' || !location.host || location.host === 'localhost:1040') return text
+  return text.split('http://localhost:1040/').join(location.origin + '/')
+}
 (function () {
   const wrap = document.getElementById('wrap')
   const body = document.getElementById('body')
@@ -153,7 +160,7 @@
     const ws = new WebSocket('ws://' + location.host)
     ws.onmessage = (e) => {
       try {
-        const msg = JSON.parse(e.data)
+        const msg = JSON.parse(lanMedia(e.data))
         if (msg && (msg.type === 'tournament_update' || msg.type === 'tournament_demo')) render(msg.state)
       } catch (err) { /* ignore */ }
     }
